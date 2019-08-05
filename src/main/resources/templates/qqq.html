@@ -1,0 +1,104 @@
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>测试</title>
+    <style>
+        #message{
+            height: 520px;
+            border-bottom: 1px solid gray;
+            padding: 20px 30px;
+        }
+        #container{
+            margin: 0 auto;
+            width: 720px;
+            border: 1px solid gray
+        }
+        input{
+            width: 300px;
+            height: 36px;
+            border: 1px solid gray;
+            background:none;
+            outline:none;
+        }
+        input:focus{
+            border-color: yellow;
+        }
+        button{
+            height: 36px;
+        }
+    </style>
+</head>
+<body>
+昵称：<input type="text" id="nickname">
+<button onclick="conectWebSocket()">连接WebSocket</button>
+<button onclick="closeWebSocket()">断开连接WebSocket</button>
+<div id="container">
+    <div id="message">
+
+    </div>
+    <div>
+        <input id="text" type="text" placeholder="输入内容..."/>
+        <button onclick="send()">发送消息</button>
+    </div>
+</div>
+<script th:inline="javascript" type="text/javascript">
+    var websocket = null;
+
+    function conectWebSocket() {
+
+        //判断当前浏览器是否支持WebSocket
+        if ('WebSocket' in window) {
+            var nickname=document.getElementById("nickname").value;
+            if(nickname==""){
+                alert("请输入昵称");
+                return;
+            }
+            websocket = new WebSocket("ws://localhost:8080/myWebSocket/"+nickname);
+        }
+        else {
+            alert('当前浏览器不支持websocket');
+        }
+
+
+
+        //连接成功建立的回调方法
+        websocket.onopen = function () {
+            console.log("onopen...");
+            document.getElementById('message').innerHTML +="Loc MSG: 成功建立连接" + '<br/>';
+        }
+        //接收到消息的回调方法
+        websocket.onmessage = function (event) {
+            var data = event.data;
+            document.getElementById('message').innerHTML += data + '<br/>';
+
+        }
+
+
+        //连接关闭的回调方法
+        websocket.onclose = function () {
+            console.log("onclose...");
+            document.getElementById('message').innerHTML +="关闭连接" + '<br/>';
+        }
+        //连接发生错误的回调方法
+        websocket.onerror = function () {
+            console.log("onerror...");
+        };
+        //监听窗口关闭事件，当窗口关闭时，主动去关闭websocket连接，防止连接还没断开就关闭窗口，server端会抛异常。
+        window.onbeforeunload = function () {
+            closeWebSocket();
+        }
+
+
+    }
+    //发送消息
+    function send() {
+        var message = document.getElementById('text').value;
+        websocket.send(message);
+    }
+    //关闭WebSocket连接
+    function closeWebSocket() {
+        websocket.close();
+    }
+</script>
+</body>
+</html>
